@@ -5,11 +5,31 @@ import * as React from 'react'
 // 🐨 you'll also need to get the fetchPokemon function from ../pokemon:
 import {fetchPokemon, PokemonDataView, PokemonErrorBoundary} from '../pokemon'
 
+function createResource(promise) {
+  let status = 'pending'
+  let result = promise.then(
+    resolved => {
+      status = 'resolved'
+      result = resolved
+    },
+    rejected => {
+      status = 'rejected'
+      result = rejected
+    },
+  )
+
+  return {
+    read() {
+      if (status === 'pending') throw result
+      if (status === 'rejected') throw result
+      if (status === 'resolved') return result
+    },
+  }
+}
+
 // 💰 use it like this: fetchPokemon(pokemonName).then(handleSuccess, handleFailure)
 
 // 🐨 create a variable called "pokemon" (using let)
-let pokemon
-let pokemonError
 
 // 💣 delete this now...
 // const pokemon = {
@@ -24,20 +44,14 @@ let pokemonError
 // We don't need the app to be mounted to know that we want to fetch the pokemon
 // named "pikachu" so we can go ahead and do that right here.
 // 🐨 assign a pokemonPromise variable to a call to fetchPokemon('pikachu')
-const pokemonPromise = fetchPokemon('pikacha')
-pokemonPromise.then(
-  resolvedValue => (pokemon = resolvedValue),
-  error => (pokemonError = error),
-)
 
 // 🐨 when the promise resolves, assign the "pokemon" variable to the resolved value
 // 💰 For example: somePromise.then(resolvedValue => (someValue = resolvedValue))
-
+const pokemonResource = createResource(fetchPokemon('pikachu'))
 function PokemonInfo() {
   // 🐨 if there's no pokemon yet, then throw the pokemonPromise
   // 💰 (no, for real. Like: `throw pokemonPromise`)
-  if (pokemonError) throw pokemonError
-  if (!pokemon) throw pokemonPromise
+  const pokemon = pokemonResource.read()
 
   // if the code gets it this far, then the pokemon variable is defined and
   // rendering can continue!
